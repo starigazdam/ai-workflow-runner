@@ -1,0 +1,27 @@
+{
+  "name": "ai-workflow-runner",
+  "version": "0.1.0",
+  "description": "AI-driven workflow engine — runs structured YAML-defined workflows via LLM agents (GitHub Copilot, OpenAI, Anthropic). Exposes a CLI, batch runner, and MCP server.",
+  "type": "module",
+  "scripts": {
+    "validate-workflow-yaml": "tsx src/validate.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "mock-run": "tsx src/mock-run.ts",
+    "mcp-server": "tsx src/mcp/server.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.87.0",
+    "@github/copilot-sdk": "^0.2.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "js-yaml": "^4.1.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

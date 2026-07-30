@@ -1,0 +1,414 @@
+# peon workflow — canonical definition
+# Single source of truth for phases, gates, agent I/O, and handoffs.
+# Used by the TypeScript state machine (src/workflow/PeonWorkflow.ts) as the
+# authoritative spec; also read-able by humans reviewing the process.
+#
+# Legend:
+#   gate.type: blocking   — state machine throws GateError (stops phase)
+#              advisory   — emits warning, continues
+#   agent:     null       — no LLM call; step is pure orchestration / user approval
+#   output:    keys written to context-{TICKET-ID}.json after successful phase completion
+
+meta:
+  version: "1.0.0"
+  context_file: ".github/tmp/context-{ticket_id}.json"
+  audit_dir: ".github/workflows/peon/runs"
+  artifacts_schema: ".github/workflows/peon/artifacts.json"
+  routing_after: repo_resolver # routing rules evaluated after this phase completes
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ROUTING RULES  (evaluated after Phase 1, before Phase 2)
+# ─────────────────────────────────────────────────────────────────────────────
+routing:
+  - condition: "jira_data.status contains 'Analysis'"
+    fork: [analysis]
+    stop_after_fork: true
+
+  - condition: "jira_data.status contains 'Review' or jira_data.status contains 'QA'"
+    fork: [pr_review, pr_comment_fix]
+    stop_after_fork: false
+
+  - condition: "jira_data.issuetype == 'Bug'"
+    fork: [planning, bug_investigation] # run in parallel; bug output consumed by planner
+    stop_after_fork: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASES
+# ─────────────────────────────────────────────────────────────────────────────
+phases:
+  # ── Phase 0 ────────────────────────────────────────────────────────────────
+  - id: intake
+    label: "Phase 0 — Ticket Intake"
+    agent: "05-intake"
+    required_inputs: []
+    outputs:
+      - key: jira_data
+        schema:
+          key: string
+          summary: string
+          issuetype: "Story | Bug | Task | Sub-task"
+          status: string
+          priority: string
+          parent: "string | null"
+          description: string
+          assignee: "string | null"
+          comments: array
+          acceptance_criteria_inferred: array
+    gates:
+      - id: gate_intake_jira
+        type: blocking
+        check: "jira_data != null && jira_data.key != null"
+        message: "Jira fetch failed — ticket not found or not accessible."
+        remediation: "Verify ticket ID and az login / Jira auth."
+    next: repo_resolver
+
+  # ── Phase 1 ────────────────────────────────────────────────────────────────
+  - id: repo_resolver
+    label: "Phase 1 — Repository Resolution"
+    agent: "10-repo-resolver"
+    required_inputs: [jira_data]
+    outputs:
+      - key: repo_context
+        schema:
+          - name: string
+            short: string
+            workspace_path: string
+            tech_stack: array # e.g. ["dotnet", "csharp"] | ["typescript", "node"]
+            branch: string
+    gates:
+      - id: gate_repo_confirm
+        type: blocking
+        check: "repo_context != null && repo_context.length > 0"
+        message: "No repositories resolved."
+        remediation: "Check repo-relations skill; verify ticket keywords."
+      - id: gate_user_confirm_repos
+        type: blocking
+        kind: user_approval
+        message: "Confirm resolved repositories before proceeding."
+    next: planning # default — see routing rules for forks
+
+  # ── Phase 1.5 (fork: analysis tickets) ─────────────────────────────────────
+  - id: analysis
+    label: "Phase 1.5 — Technical Analysis"
+    agent: "15-technical-analyst"
+    model: "claude-opus-4"
+    required_inputs: [jira_data, repo_context]
+    outputs:
+      - key: analysis_doc
+        schema:
+          file_path: string
+          summary: string
+    gates:
+      - id: gate_analysis_doc
+        type: blocking
+        check: "analysis_doc != null && analysis_doc.file_path != null"
+        message: "Analysis document was not produced."
+    terminal: true # workflow stops after this phase for analysis tickets
+
+  # ── Phase 1.6 (fork: review tickets) ──────────────────────────────────────
+  - id: pr_review
+    label: "Phase 1.6 — PR Review"
+    agent: "45-pr-reviewer"
+    model: "claude-opus-4"
+    required_inputs: [jira_data, pr_data]
+    outputs:
+      - key: review_findings
+        schema:
+          critical: array
+          major: array
+          minor: array
+          summary: string
+    gates:
+      - id: gate_pr_data
+        type: blocking
+        check: "pr_data != null && pr_data.pr_id != null"
+        message: "pr_data missing — cannot review without PR reference."
+    next: cleanup
+
+  # ── Phase 1.7 (fork: pr comment fix) ──────────────────────────────────────
+  - id: pr_comment_fix
+    label: "Phase 1.7 — Address PR Comments"
+    agent: "40-pr-comment-fixer"
+    required_inputs: [jira_data, pr_data]
+    outputs:
+      - key: commits
+        schema:
+          messages: array
+          repos: array
+    gates:
+      - id: gate_pr_data_fix
+        type: blocking
+        check: "pr_data != null"
+        message: "pr_data required to fix PR comments."
+    next: cleanup
+
+  # ── Phase 2a (fork: bug tickets) ───────────────────────────────────────────
+  - id: bug_investigation
+    label: "Phase 2a — Bug Investigation"
+    agent: "25-bug-fixer"
+    required_inputs: [jira_data, repo_context]
+    parallel_with: planning
+    outputs:
+      - key: bug_investigation
+        schema:
+          classification: "CODE_FIX | CONFIG_ISSUE | ESCALATE"
+          hypothesis: string
+          root_cause: "string | null"
+          proposed_fix: "string | null"
+    gates:
+      - id: gate_bug_classification
+        type: blocking
+        check: "bug_investigation.classification in ['CODE_FIX','CONFIG_ISSUE','ESCALATE']"
+        message: "Bug investigation did not produce a valid classification."
+    next: null # output consumed by planning phase; no separate next
+
+  # ── Phase 2 ────────────────────────────────────────────────────────────────
+  - id: planning
+    label: "Phase 2 — Planning"
+    agent: "20-planner"
+    model: "claude-opus-4"
+    required_inputs: [jira_data, repo_context]
+    optional_inputs: [bug_investigation] # consumed when available (bug fork)
+    outputs:
+      - key: plan
+        schema:
+          branch: string
+          subtasks:
+            - id: integer
+              repo: string
+              description: string
+              test_type: "unit | integration | none"
+          dependency_order: array
+          needs_apim: boolean
+    gates:
+      - id: gate_plan_subtasks
+        type: blocking
+        check: "plan.subtasks.length > 0 && plan.subtasks.length <= 4"
+        message: "Plan must have 1–4 subtasks per repo."
+      - id: gate_user_confirm_plan
+        type: blocking
+        kind: user_approval
+        message: "Confirm subtask plan before creating branch and implementing."
+    next: branch_setup
+
+  # ── Phase 3 ────────────────────────────────────────────────────────────────
+  - id: branch_setup
+    label: "Phase 3 — Branch & Guard Rails"
+    agent: null # pure orchestration: git branch creation
+    required_inputs: [plan]
+    outputs:
+      - key: branch_created
+        schema:
+          branch: string
+          repos: array
+    gates:
+      - id: gate_branch_name
+        type: blocking
+        check: "plan.branch matches /^(feature|fix|hotfix|refactor)\\/[A-Z]+[0-9]*-[0-9]+-[a-z0-9-]+$/"
+        message: "Branch name does not follow convention {prefix}/{TICKET-ID}-{description}."
+      - id: gate_user_confirm_branch
+        type: blocking
+        kind: user_approval
+        message: "Confirm branch name before proceeding to implementation."
+    next: implementation
+
+  # ── Phase 4 ────────────────────────────────────────────────────────────────
+  - id: implementation
+    label: "Phase 4 — Implementation"
+    agent: "30-implementer"
+    required_inputs: [jira_data, plan]
+    loop: true # executed once per subtask in plan.subtasks
+    per_iteration:
+      input: "plan.subtasks[i]"
+      outputs:
+        - key: commits
+          schema:
+            messages: array
+            repos: array
+      gates:
+        - id: gate_subtask_commit
+          type: blocking
+          check: "commits.messages.length > 0"
+          message: "Subtask produced no commits — implementation incomplete."
+        - id: gate_user_confirm_subtask
+          type: blocking
+          kind: user_approval
+          message: "Confirm subtask {i} implementation before proceeding."
+    next: verification
+
+  # ── Phase 5 ────────────────────────────────────────────────────────────────
+  - id: verification
+    label: "Phase 5 — Tests & Lint"
+    agent: null # pure tooling: dotnet test / npm test / lint
+    required_inputs: [plan, commits]
+    outputs:
+      - key: verification_result
+        schema:
+          tests_passed: boolean
+          lint_passed: boolean
+          errors: array
+    gates:
+      - id: gate_tests_pass
+        type: blocking
+        check: "verification_result.tests_passed == true"
+        message: "Test suite failed — self-heal before proceeding."
+      - id: gate_lint_pass
+        type: blocking
+        check: "verification_result.lint_passed == true"
+        message: "Lint/format violations — run dotnet format / npm run lint."
+    next: security_audit
+
+  # ── Phase 5e ───────────────────────────────────────────────────────────────
+  - id: security_audit
+    label: "Phase 5e — Security Audit"
+    agent: "80-security-auditor"
+    required_inputs: [repo_context]
+    outputs:
+      - key: security_report
+        schema:
+          critical: array
+          high: array
+          medium: array
+          low: array
+    gates:
+      - id: gate_no_critical_vulns
+        type: blocking
+        check: "security_report.critical.length == 0"
+        message: "Critical security findings must be resolved before creating a PR."
+      - id: gate_no_high_vulns
+        type: advisory
+        check: "security_report.high.length == 0"
+        message: "High-severity findings present — review before PR."
+    next: pr_creation
+
+  # ── Phase 6 ────────────────────────────────────────────────────────────────
+  - id: pr_creation
+    label: "Phase 6 — PR & Engineering Addendum"
+    agent: "50-pr-engineering-addendum"
+    required_inputs: [jira_data, repo_context, self_review_completed]
+    outputs:
+      - key: pr_data
+        schema:
+          pr_id: string
+          title: string
+          source_branch: string
+          target_branch: string
+          repo_name: string
+          file_list: array
+          url: string
+      - key: addendum_path
+        schema:
+          file_path: string
+    gates:
+      - id: gate_self_review
+        type: blocking
+        check: "self_review_completed == true"
+        message: "Self-review not completed — set self_review_completed=true in context first."
+        remediation: "Run: jq '.self_review_completed = true' context.json > tmp && mv tmp context.json"
+      - id: gate_pr_created
+        type: blocking
+        check: "pr_data.pr_id != null"
+        message: "PR was not created."
+      - id: gate_user_confirm_pr
+        type: blocking
+        kind: user_approval
+        message: "Confirm PR details and Jira comment before cleanup."
+    next: cleanup
+
+  # ── Phase 7 ────────────────────────────────────────────────────────────────
+  - id: cleanup
+    label: "Phase 7 — Cleanup & Self-Improvement"
+    agent: "60-self-improver"
+    required_inputs: []
+    outputs:
+      - key: improvement_proposals
+        schema:
+          proposals: array
+          approved: boolean
+    gates:
+      - id: gate_no_wip_commits
+        type: advisory
+        check: "no WIP commits in any workspace repo"
+        message: "WIP commits found — squash or amend before session ends."
+      - id: gate_memory_sync
+        type: advisory
+        check: "memory sync clean (check-memory-sync.sh passes)"
+        message: "Memory files out of sync — run check-memory-sync.sh."
+      - id: gate_wrapup_not_autopilot
+        type: blocking
+        kind: wrap_up_gate
+        check: "!isAutopilot || !isWrapupPrompt"
+        message: "Wrapup requires manual confirmation in autopilot mode."
+    terminal: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CROSS-CUTTING HOOKS
+# These run outside of phase transitions — registered in hooks.json
+# ─────────────────────────────────────────────────────────────────────────────
+hooks:
+  SubagentStart:
+    - id: artifact_gate
+      description: "Validates required_inputs from artifacts.json before dispatching any subagent."
+      blocks: true
+      source: ".github/workflows/peon/hooks/audit.sh (SubagentStart branch)"
+      node_equivalent: "hooks/audit.js"
+
+  PreToolUse:
+    - id: lint_gate
+      description: "Blocks git commit when staged .cs/.ts files have lint/format violations."
+      blocks: true
+      source: ".github/scripts/hooks/lint-gate.sh"
+      node_equivalent: null # scripts/hooks kept as bash
+
+    - id: self_review_gate
+      description: "Blocks az repos pr create / mcp_microsoft_azu_repo_create_pull_request unless self_review_completed=true."
+      blocks: true
+      source: ".github/workflows/peon/hooks/self-review-gate.sh"
+      node_equivalent: "hooks/self-review-gate.js"
+
+  UserPromptSubmit:
+    - id: wrap_up_gate
+      description: "Blocks /wrapup-session when isAutopilot=true."
+      blocks: true
+      source: ".github/workflows/peon/hooks/wrap-up-gate.sh"
+      node_equivalent: "hooks/wrap-up-gate.js"
+
+    - id: audit_run_start
+      description: "Creates runs/run-{ts}/audit.json and writes runs/.active pointer on /peon invocation."
+      blocks: false
+      source: ".github/workflows/peon/hooks/audit.sh (UserPromptSubmit branch)"
+      node_equivalent: "hooks/audit.js"
+
+  PostToolUse:
+    - id: audit_commit_capture
+      description: "Appends git_commit events to audit.json when git commit -m is detected."
+      blocks: false
+      source: ".github/workflows/peon/hooks/audit.sh (PostToolUse branch)"
+      node_equivalent: "hooks/audit.js"
+
+  Stop:
+    - id: audit_run_finish
+      description: "Appends run_finished to audit.json, saves plan to .github/plans/, clears .active pointer."
+      blocks: false
+      source: ".github/workflows/peon/hooks/audit.sh (Stop branch)"
+      node_equivalent: "hooks/audit.js"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SHARED CONTEXT SCHEMA  (.github/tmp/context-{TICKET-ID}.json)
+# ─────────────────────────────────────────────────────────────────────────────
+context_schema:
+  ticket_id: string
+  jira_data: object # written by: intake
+  repo_context: array # written by: repo_resolver
+  plan: object # written by: planning
+  bug_investigation: object # written by: bug_investigation (optional)
+  analysis_doc: object # written by: analysis (optional)
+  commits: object # written by: implementation, pr_comment_fix
+  verification_result: object # written by: verification
+  security_report: object # written by: security_audit
+  pr_data: object # written by: pr_creation
+  addendum_path: object # written by: pr_creation
+  review_findings: object # written by: pr_review (optional)
+  improvement_proposals: object # written by: cleanup
+  self_review_completed: boolean # written manually by agent before Phase 6
+  branch_created: object # written by: branch_setup
