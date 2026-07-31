@@ -1,4 +1,6 @@
 /**
+ * @experimental This module is experimental and not yet validated for production use.
+ *
  * batch.ts — Autonomous batch runner for overnight ticket processing.
  *
  * Runs multiple tickets sequentially with autoApprove=true. Supports:

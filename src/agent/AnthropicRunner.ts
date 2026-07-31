@@ -1,4 +1,6 @@
 /**
+ * @experimental This runner is experimental and not yet validated for production use.
+ *
  * AnthropicRunner — agent runner backed by the Anthropic Messages API.
  *
  * Uses `tool_use` content blocks for structured output extraction instead

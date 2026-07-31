@@ -1,4 +1,6 @@
 /**
+ * @experimental This runner is experimental and not yet validated for production use.
+ *
  * OpenAiRunner — real agent runner backed by any OpenAI-compatible /chat/completions API.
  *
  * Default config (zero env vars needed when using GitHub Copilot API):
