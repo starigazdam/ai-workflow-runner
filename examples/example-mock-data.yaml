@@ -11,13 +11,13 @@ scenarios:
     phases:
       intake:
         jira_data:
-          key: "COPEE2-9999"
+          key: "PROJ-9999"
           summary: "Mock: add customer endpoint"
           issuetype: "Story"
           status: "In Progress"
           priority: "Medium"
           parent: null
-          description: "Implement a new customer endpoint for the portal."
+          description: "Implement a new customer endpoint."
           assignee: "mock-user"
           comments: []
           acceptance_criteria_inferred:
@@ -26,45 +26,45 @@ scenarios:
 
       repo_resolver:
         repo_context:
-          - name: "atlascopco-oneportalecommerce-commercetools-services"
-            short: "ct-services"
-            workspace_path: "workspace/atlascopco-oneportalecommerce-commercetools-services"
-            tech_stack: ["dotnet", "csharp"]
-            branch: "feature/COPEE2-9999-add-customer-endpoint"
+          - name: "my-org-backend-services"
+            short: "backend-services"
+            workspace_path: "workspace/my-org-backend-services"
+            tech_stack: ["typescript", "node"]
+            branch: "feature/PROJ-9999-add-customer-endpoint"
 
       planning:
         plan:
-          branch: "feature/COPEE2-9999-add-customer-endpoint"
+          branch: "feature/PROJ-9999-add-customer-endpoint"
           subtasks:
             - id: 1
               title: "Add GetCustomer endpoint"
-              description: "Create HTTP trigger function"
-              files: ["src/Functions/GetCustomer.cs"]
+              description: "Create HTTP handler function"
+              files: ["src/handlers/getCustomer.ts"]
             - id: 2
               title: "Add validation"
               description: "Input validation middleware"
-              files: ["src/Validation/CustomerValidator.cs"]
+              files: ["src/validation/customerValidator.ts"]
             - id: 3
               title: "Add unit tests"
               description: "Test endpoint and validator"
-              files: ["tests/GetCustomerTests.cs"]
+              files: ["tests/getCustomer.test.ts"]
 
       branch_setup:
         branch_created:
-          name: "feature/COPEE2-9999-add-customer-endpoint"
-          repos: ["atlascopco-oneportalecommerce-commercetools-services"]
+          name: "feature/PROJ-9999-add-customer-endpoint"
+          repos: ["my-org-backend-services"]
 
       implementation:
         commits:
           - hash: "abc1234"
-            message: "COPEE2-9999: add GetCustomer endpoint"
-            files: ["src/Functions/GetCustomer.cs"]
+            message: "PROJ-9999: add GetCustomer endpoint"
+            files: ["src/handlers/getCustomer.ts"]
           - hash: "def5678"
-            message: "COPEE2-9999: add input validation"
-            files: ["src/Validation/CustomerValidator.cs"]
+            message: "PROJ-9999: add input validation"
+            files: ["src/validation/customerValidator.ts"]
           - hash: "ghi9012"
-            message: "COPEE2-9999: add unit tests"
-            files: ["tests/GetCustomerTests.cs"]
+            message: "PROJ-9999: add unit tests"
+            files: ["tests/getCustomer.test.ts"]
 
       verification:
         verification_result:
@@ -86,9 +86,9 @@ scenarios:
       pr_creation:
         pr_data:
           pr_id: "42001"
-          url: "https://dev.azure.com/org/project/_git/ct-services/pullrequest/42001"
-          title: "COPEE2-9999: add customer endpoint"
-        addendum_path: "memory/addendums/COPEE2-9999.md"
+          url: "https://github.com/my-org/my-org-backend-services/pull/42001"
+          title: "PROJ-9999: add customer endpoint"
+        addendum_path: "memory/addendums/PROJ-9999.md"
 
       cleanup:
         improvement_proposals:
@@ -100,30 +100,30 @@ scenarios:
     phases:
       intake:
         jira_data:
-          key: "COPEE2-8888"
-          summary: "Mock: investigate slow cart loading"
+          key: "PROJ-8888"
+          summary: "Mock: investigate slow list loading"
           issuetype: "Task"
           status: "In Analysis"
           priority: "High"
           parent: null
-          description: "Cart page takes 8s to load for large carts."
+          description: "List page takes 8s to load for large data sets."
           assignee: "mock-user"
           comments: []
           acceptance_criteria_inferred: []
 
       repo_resolver:
         repo_context:
-          - name: "atlascopco-oneportalecommerce-cartmanagement"
-            short: "cartmgmt"
-            workspace_path: "workspace/atlascopco-oneportalecommerce-cartmanagement"
-            tech_stack: ["dotnet", "csharp"]
-            branch: "feature/COPEE2-8888-investigate-slow-cart"
+          - name: "my-org-data-service"
+            short: "data-service"
+            workspace_path: "workspace/my-org-data-service"
+            tech_stack: ["typescript", "node"]
+            branch: "feature/PROJ-8888-investigate-slow-list"
 
       analysis:
         analysis_doc:
-          title: "Cart Loading Performance Analysis"
-          root_cause: "N+1 query in cart line item expansion"
-          recommendation: "Batch CT API calls using GraphQL query"
+          title: "List Loading Performance Analysis"
+          root_cause: "N+1 query in list item expansion"
+          recommendation: "Batch API calls using GraphQL query"
           estimated_effort: "3 story points"
 
   # ── Bug ticket — includes bug investigation fork ───────────────────────
@@ -132,7 +132,7 @@ scenarios:
     phases:
       intake:
         jira_data:
-          key: "COPEE2-7777"
+          key: "PROJ-7777"
           summary: "Mock: order total wrong for multi-currency"
           issuetype: "Bug"
           status: "In Progress"
@@ -140,50 +140,50 @@ scenarios:
           parent: null
           description: "Order total shows EUR when customer currency is USD."
           assignee: "mock-user"
-          comments: ["Reported by customer DE-12345"]
+          comments: ["Reported by customer support"]
           acceptance_criteria_inferred:
             - "Order total matches customer currency"
 
       repo_resolver:
         repo_context:
-          - name: "atlascopco-oneportalecommerce-commercetools-processing"
-            short: "ct-proc"
-            workspace_path: "workspace/atlascopco-oneportalecommerce-commercetools-processing"
-            tech_stack: ["dotnet", "csharp"]
-            branch: "fix/COPEE2-7777-multi-currency-total"
+          - name: "my-org-order-processing"
+            short: "order-proc"
+            workspace_path: "workspace/my-org-order-processing"
+            tech_stack: ["typescript", "node"]
+            branch: "fix/PROJ-7777-multi-currency-total"
 
       bug_investigation:
         bug_investigation:
           classification: "Logic error"
-          root_cause: "Currency lookup uses project default instead of cart currency"
+          root_cause: "Currency lookup uses project default instead of order currency"
           affected_files:
-            - "src/OrderProcessing/TotalCalculator.cs"
+            - "src/order/totalCalculator.ts"
 
       planning:
         plan:
           subtasks:
             - id: 1
               title: "Fix currency lookup"
-              description: "Use cart.totalPrice.currencyCode"
-              files: ["src/OrderProcessing/TotalCalculator.cs"]
+              description: "Use order.totalPrice.currencyCode"
+              files: ["src/order/totalCalculator.ts"]
             - id: 2
               title: "Add regression test"
               description: "Multi-currency order total test"
-              files: ["tests/TotalCalculatorTests.cs"]
+              files: ["tests/totalCalculator.test.ts"]
 
       branch_setup:
         branch_created:
-          name: "fix/COPEE2-7777-multi-currency-total"
-          repos: ["atlascopco-oneportalecommerce-commercetools-processing"]
+          name: "fix/PROJ-7777-multi-currency-total"
+          repos: ["my-org-order-processing"]
 
       implementation:
         commits:
           - hash: "xyz1111"
-            message: "COPEE2-7777: fix currency lookup in TotalCalculator"
-            files: ["src/OrderProcessing/TotalCalculator.cs"]
+            message: "PROJ-7777: fix currency lookup in totalCalculator"
+            files: ["src/order/totalCalculator.ts"]
           - hash: "xyz2222"
-            message: "COPEE2-7777: add multi-currency regression test"
-            files: ["tests/TotalCalculatorTests.cs"]
+            message: "PROJ-7777: add multi-currency regression test"
+            files: ["tests/totalCalculator.test.ts"]
 
       verification:
         verification_result:
@@ -204,9 +204,9 @@ scenarios:
       pr_creation:
         pr_data:
           pr_id: "42002"
-          url: "https://dev.azure.com/org/project/_git/ct-processing/pullrequest/42002"
-          title: "COPEE2-7777: fix multi-currency order total"
-        addendum_path: "memory/addendums/COPEE2-7777.md"
+          url: "https://github.com/my-org/my-org-order-processing/pull/42002"
+          title: "PROJ-7777: fix multi-currency order total"
+        addendum_path: "memory/addendums/PROJ-7777.md"
 
       cleanup:
         improvement_proposals: []

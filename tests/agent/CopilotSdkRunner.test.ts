@@ -178,12 +178,12 @@ describe("CopilotSdkRunner", () => {
 
   it("parses JSON code block from response as outputs", async () => {
     makeSession(
-      '```json\n{"ticket_id": "COPEE2-1234", "analysis_done": true}\n```',
+      '```json\n{"ticket_id": "PROJ-1234", "analysis_done": true}\n```',
     );
     const runner = await makeRunner();
     const result = await runner.run("05-intake", "intake", {});
     expect(result.outputs).toEqual({
-      ticket_id: "COPEE2-1234",
+      ticket_id: "PROJ-1234",
       analysis_done: true,
     });
   });
@@ -335,7 +335,7 @@ describe("CopilotSdkRunner", () => {
   it("filters context to requiredInputs + optionalInputs when phaseMeta provided", async () => {
     const runner = await makeRunner();
     const fullContext = {
-      ticket_id: "COPEE2-1",
+      ticket_id: "PROJ-1",
       branch: "feature/X",
       irrelevant_key: "should not appear",
     };

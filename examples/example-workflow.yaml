@@ -1,7 +1,7 @@
-# peon workflow — canonical definition
+# example workflow — canonical definition
 # Single source of truth for phases, gates, agent I/O, and handoffs.
-# Used by the TypeScript state machine (src/workflow/PeonWorkflow.ts) as the
-# authoritative spec; also read-able by humans reviewing the process.
+# Used by the TypeScript state machine as the authoritative spec;
+# also human-readable for process review.
 #
 # Legend:
 #   gate.type: blocking   — state machine throws GateError (stops phase)
@@ -12,8 +12,8 @@
 meta:
   version: "1.0.0"
   context_file: ".github/tmp/context-{ticket_id}.json"
-  audit_dir: ".github/workflows/peon/runs"
-  artifacts_schema: ".github/workflows/peon/artifacts.json"
+  audit_dir: ".github/workflows/ai-workflow/runs"
+  artifacts_schema: ".github/workflows/ai-workflow/artifacts.json"
   routing_after: repo_resolver # routing rules evaluated after this phase completes
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -350,7 +350,7 @@ hooks:
     - id: artifact_gate
       description: "Validates required_inputs from artifacts.json before dispatching any subagent."
       blocks: true
-      source: ".github/workflows/peon/hooks/audit.sh (SubagentStart branch)"
+      source: ".github/workflows/ai-workflow/hooks/audit.sh (SubagentStart branch)"
       node_equivalent: "hooks/audit.js"
 
   PreToolUse:
@@ -361,36 +361,36 @@ hooks:
       node_equivalent: null # scripts/hooks kept as bash
 
     - id: self_review_gate
-      description: "Blocks az repos pr create / mcp_microsoft_azu_repo_create_pull_request unless self_review_completed=true."
+      description: "Blocks PR creation unless self_review_completed=true."
       blocks: true
-      source: ".github/workflows/peon/hooks/self-review-gate.sh"
+      source: ".github/workflows/ai-workflow/hooks/self-review-gate.sh"
       node_equivalent: "hooks/self-review-gate.js"
 
   UserPromptSubmit:
     - id: wrap_up_gate
       description: "Blocks /wrapup-session when isAutopilot=true."
       blocks: true
-      source: ".github/workflows/peon/hooks/wrap-up-gate.sh"
+      source: ".github/workflows/ai-workflow/hooks/wrap-up-gate.sh"
       node_equivalent: "hooks/wrap-up-gate.js"
 
     - id: audit_run_start
-      description: "Creates runs/run-{ts}/audit.json and writes runs/.active pointer on /peon invocation."
+      description: "Creates runs/run-{ts}/audit.json and writes runs/.active pointer on /workflow invocation."
       blocks: false
-      source: ".github/workflows/peon/hooks/audit.sh (UserPromptSubmit branch)"
+      source: ".github/workflows/ai-workflow/hooks/audit.sh (UserPromptSubmit branch)"
       node_equivalent: "hooks/audit.js"
 
   PostToolUse:
     - id: audit_commit_capture
       description: "Appends git_commit events to audit.json when git commit -m is detected."
       blocks: false
-      source: ".github/workflows/peon/hooks/audit.sh (PostToolUse branch)"
+      source: ".github/workflows/ai-workflow/hooks/audit.sh (PostToolUse branch)"
       node_equivalent: "hooks/audit.js"
 
   Stop:
     - id: audit_run_finish
       description: "Appends run_finished to audit.json, saves plan to .github/plans/, clears .active pointer."
       blocks: false
-      source: ".github/workflows/peon/hooks/audit.sh (Stop branch)"
+      source: ".github/workflows/ai-workflow/hooks/audit.sh (Stop branch)"
       node_equivalent: "hooks/audit.js"
 
 # ─────────────────────────────────────────────────────────────────────────────

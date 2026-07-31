@@ -2,11 +2,11 @@
  * main.ts — CLI entry point for the workflow engine.
  *
  * Usage:
- *   npx tsx src/main.ts --ticket COPEE2-1234                        # real run (copilot-sdk runner, default)
- *   npx tsx src/main.ts --ticket COPEE2-1234 --runner openai          # raw /chat/completions fallback
- *   npx tsx src/main.ts --ticket COPEE2-1234 --runner anthropic       # Anthropic API fallback
- *   npx tsx src/main.ts --ticket COPEE2-1234 --dry-run                # show what would happen
- *   npx tsx src/main.ts --ticket COPEE2-1234 --auto-approve           # skip approval pauses
+ *   npx tsx src/main.ts --ticket PROJ-1234                        # real run (copilot-sdk runner, default)
+ *   npx tsx src/main.ts --ticket PROJ-1234 --runner openai          # raw /chat/completions fallback
+ *   npx tsx src/main.ts --ticket PROJ-1234 --runner anthropic       # Anthropic API fallback
+ *   npx tsx src/main.ts --ticket PROJ-1234 --dry-run                # show what would happen
+ *   npx tsx src/main.ts --ticket PROJ-1234 --auto-approve           # skip approval pauses
  *   npx tsx src/main.ts --mock --scenario story                       # mock run
  *
  * --repo-root <path>   Root of the repo the runner operates on.
@@ -14,7 +14,7 @@
  *                      The runner stores context in <repo-root>/.github/tmp/ and reads
  *                      agent .md files from <repo-root>/.github/agents/.
  *
- * --workflow <path>    Path to workflow.yaml. Defaults to examples/peon-workflow.yaml.
+ * --workflow <path>    Path to workflow.yaml. Defaults to examples/example-workflow.yaml.
  *
  * BYOK via copilot-sdk runner:
  *   --provider-type openai|azure|anthropic
@@ -312,7 +312,7 @@ function writeRun(
 
 async function main(): Promise<void> {
   const args = parseArgs();
-  const workflowPath = args.workflow ?? join(SDK_ROOT, "examples", "peon-workflow.yaml");
+  const workflowPath = args.workflow ?? join(SDK_ROOT, "examples", "example-workflow.yaml");
   const REPO_ROOT = args.repoRoot ?? process.env.WORKFLOW_REPO_ROOT ?? process.cwd();
   const workflowDir = dirname(workflowPath);
   const workflow = loadWorkflow(workflowPath);
@@ -320,7 +320,7 @@ async function main(): Promise<void> {
 
   // ── Mock mode ──────────────────────────────────────────────────────────
   if (args.mock) {
-    const mockPath = join(SDK_ROOT, "examples", "peon-mock-data.yaml");
+    const mockPath = join(SDK_ROOT, "examples", "example-mock-data.yaml");
     const mockData = yaml.load(readFileSync(mockPath, "utf-8")) as {
       scenarios: Record<
         string,

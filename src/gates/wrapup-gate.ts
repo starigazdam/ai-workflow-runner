@@ -1,6 +1,6 @@
 /**
  * Wrapup gate — blocks /wrapup-session when isAutopilot is true.
- * Equivalent to peon/hooks/wrap-up-gate.sh.
+ * Equivalent to the wrap-up-gate hook.
  */
 import type { GateResult } from "./types.js";
 

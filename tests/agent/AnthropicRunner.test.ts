@@ -87,7 +87,7 @@ describe("AnthropicRunner", () => {
 
     it("does not call the Anthropic client in dry-run", async () => {
       const runner = new AnthropicRunner({ repoRoot: REPO_ROOT, dryRun: true });
-      await runner.run("05-intake", "intake", { ticket_id: "COPEE2-1" });
+      await runner.run("05-intake", "intake", { ticket_id: "PROJ-1" });
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
@@ -144,7 +144,7 @@ describe("AnthropicRunner", () => {
     it("handles nested object outputs from tool_use", async () => {
       const outputs = {
         plan: { subtasks: ["s1", "s2"], estimate: 3 },
-        branch: "feature/COPEE2-1-test",
+        branch: "feature/PROJ-1-test",
       };
       mockCreate.mockResolvedValueOnce(makeToolUseResponse(outputs));
       const runner = new AnthropicRunner({ repoRoot: REPO_ROOT });
@@ -205,7 +205,7 @@ describe("AnthropicRunner", () => {
       await runner.run(
         "30-implementer",
         "implement",
-        { ticket_id: "COPEE2-1", irrelevant_key: "noise", plan: "my plan" },
+        { ticket_id: "PROJ-1", irrelevant_key: "noise", plan: "my plan" },
         undefined,
         { requiredInputs: ["ticket_id", "plan"] },
       );
@@ -225,7 +225,7 @@ describe("AnthropicRunner", () => {
       await runner.run(
         "30-implementer",
         "implement",
-        { ticket_id: "COPEE2-1", optional_note: "useful", not_included: "x" },
+        { ticket_id: "PROJ-1", optional_note: "useful", not_included: "x" },
         undefined,
         { requiredInputs: ["ticket_id"], optionalInputs: ["optional_note"] },
       );

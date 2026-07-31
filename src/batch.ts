@@ -8,7 +8,7 @@
  *   - Aggregated report in runs/batch-{date}/report.md
  *
  * Usage:
- *   npx tsx src/batch.ts --tickets COPEE2-1,COPEE2-2
+ *   npx tsx src/batch.ts --tickets PROJ-1,PROJ-2
  *   npx tsx src/batch.ts --tickets-file tickets.txt --max-iterations 2
  *   npx tsx src/batch.ts --mock --scenario story --tickets MOCK-1,MOCK-2,MOCK-3
  *   npx tsx src/batch.ts --mock --tickets MOCK-1 < /dev/null   # headless/cron
@@ -143,7 +143,7 @@ interface MockScenario {
 }
 
 function loadMockScenario(scenario: string): MockScenario {
-  const mockPath = join(SDK_ROOT, "examples", "peon-mock-data.yaml");
+  const mockPath = join(SDK_ROOT, "examples", "example-mock-data.yaml");
   const mockData = yaml.load(readFileSync(mockPath, "utf-8")) as {
     scenarios: Record<string, MockScenario>;
   };
@@ -309,7 +309,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const workflowPath = args.workflow ?? join(SDK_ROOT, "examples", "peon-workflow.yaml");
+  const workflowPath = args.workflow ?? join(SDK_ROOT, "examples", "example-workflow.yaml");
   const scenarioData =
     args.mock || args.runner === "mock"
       ? loadMockScenario(args.scenario)

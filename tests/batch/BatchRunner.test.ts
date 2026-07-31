@@ -66,7 +66,7 @@ let testRoot: string;
 let workflowPath: string;
 
 beforeAll(() => {
-  testRoot = join(tmpdir(), `peon-batch-test-${Date.now()}`);
+  testRoot = join(tmpdir(), `workflow-batch-test-${Date.now()}`);
   mkdirSync(testRoot, { recursive: true });
   workflowPath = writeTempWorkflow(testRoot);
 });
@@ -251,7 +251,7 @@ describe("batch runner — writeReport()", () => {
 
     const results: TicketResult[] = [
       {
-        ticketId: "COPEE2-1",
+        ticketId: "PROJ-1",
         iterations: 1,
         state: "completed",
         totalTokens: 1500,
@@ -259,7 +259,7 @@ describe("batch runner — writeReport()", () => {
         notes: "",
       },
       {
-        ticketId: "COPEE2-2",
+        ticketId: "PROJ-2",
         iterations: 1,
         state: "blocked",
         totalTokens: 200,
@@ -271,8 +271,8 @@ describe("batch runner — writeReport()", () => {
     writeReport(dir, results, false);
 
     const report = readFileSync(join(dir, "report.md"), "utf-8");
-    expect(report).toContain("COPEE2-1");
-    expect(report).toContain("COPEE2-2");
+    expect(report).toContain("PROJ-1");
+    expect(report).toContain("PROJ-2");
     expect(report).toContain("completed");
     expect(report).toContain("blocked");
     expect(report).toContain("1500");

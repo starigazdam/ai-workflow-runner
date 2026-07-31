@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { loadWorkflow, buildPhaseMap } from "./workflow/WorkflowLoader.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const yamlPath = resolve(__dirname, "..", "examples", "peon-workflow.yaml");
+const yamlPath = resolve(__dirname, "..", "examples", "example-workflow.yaml");
 
 try {
   const def = loadWorkflow(yamlPath);

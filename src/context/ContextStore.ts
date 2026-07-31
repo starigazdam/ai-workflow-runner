@@ -45,7 +45,7 @@ export class ContextStore {
           ? readFileSync(join(this.tmpDir, f)).length // just need ordering, stat is slow on drvfs
           : 0,
       }))
-      .sort((a, b) => b.name.localeCompare(a.name)); // lexicographic — COPEE2-9999 > COPEE2-9000
+      .sort((a, b) => b.name.localeCompare(a.name)); // lexicographic — PROJ-9999 > PROJ-9000
 
     return files.length > 0 ? files[0].ticketId : null;
   }

@@ -91,7 +91,7 @@ function getOrCreateEngine(
   runner: "copilot-sdk" | "openai" = "copilot-sdk",
   repoRoot: string = DEFAULT_REPO_ROOT,
 ): WorkflowEngine {
-  const resolvedWorkflowPath = workflowPath ?? join(SDK_ROOT, "examples", "peon-workflow.yaml");
+  const resolvedWorkflowPath = workflowPath ?? join(SDK_ROOT, "examples", "example-workflow.yaml");
   const key = engineKey(ticketId, resolvedWorkflowPath);
   let engine = engines.get(key);
   if (engine) return engine;
@@ -160,12 +160,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           ticket_id: {
             type: "string",
-            description: "Jira ticket ID (e.g. COPEE2-1234)",
+            description: "Jira ticket ID (e.g. PROJ-1234)",
           },
           workflow_path: {
             type: "string",
             description:
-              "Absolute path to workflow.yaml. Defaults to the built-in peon workflow.",
+              "Absolute path to workflow.yaml. Defaults to the built-in example workflow.",
           },
           runner: {
             type: "string",
@@ -209,12 +209,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           ticket_id: {
             type: "string",
-            description: "Jira ticket ID (e.g. COPEE2-1234)",
+            description: "Jira ticket ID (e.g. PROJ-1234)",
           },
           workflow_path: {
             type: "string",
             description:
-              "Absolute path to workflow.yaml. Defaults to the built-in peon workflow.",
+              "Absolute path to workflow.yaml. Defaults to the built-in example workflow.",
           },
           runner: {
             type: "string",

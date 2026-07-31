@@ -26,7 +26,7 @@ function makePhase(overrides: Partial<PhaseDef> = {}): PhaseDef {
 describe("artifact-gate", () => {
   it("passes when all required_inputs are present", () => {
     const phase = makePhase({ required_inputs: ["jira_data", "plan"] });
-    const context = { jira_data: { key: "COPEE2-1" }, plan: { subtasks: [] } };
+    const context = { jira_data: { key: "PROJ-1" }, plan: { subtasks: [] } };
     const result = checkArtifactGate(phase, context);
     expect(result.ok).toBe(true);
     expect(result.missing).toBeUndefined();
@@ -34,7 +34,7 @@ describe("artifact-gate", () => {
 
   it("blocks when required_inputs are missing", () => {
     const phase = makePhase({ required_inputs: ["jira_data", "plan"] });
-    const context = { jira_data: { key: "COPEE2-1" } }; // plan missing
+    const context = { jira_data: { key: "PROJ-1" } }; // plan missing
     const result = checkArtifactGate(phase, context);
     expect(result.ok).toBe(false);
     expect(result.missing).toEqual(["plan"]);
@@ -105,7 +105,7 @@ describe("self-review-gate", () => {
 
 describe("wrapup-gate", () => {
   it("passes for non-wrapup prompts even in autopilot", () => {
-    const result = checkWrapupGate("/peon COPEE2-1234", true);
+    const result = checkWrapupGate("/workflow PROJ-1234", true);
     expect(result.ok).toBe(true);
   });
 

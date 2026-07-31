@@ -1,6 +1,6 @@
 /**
  * Self-review gate — blocks PR creation unless self_review_completed is true.
- * Equivalent to peon/hooks/self-review-gate.sh.
+ * Equivalent to the self-review-gate hook.
  */
 import type { Context } from "../context/ContextStore.js";
 import type { GateResult } from "./types.js";

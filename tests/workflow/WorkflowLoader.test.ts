@@ -11,7 +11,7 @@ import {
 import { WorkflowDefSchema } from "../../src/types/workflow.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const yamlPath = resolve(__dirname, "..", "..", "examples", "peon-workflow.yaml");
+const yamlPath = resolve(__dirname, "..", "..", "examples", "example-workflow.yaml");
 
 describe("WorkflowLoader", () => {
   it("loads workflow.yaml without error", () => {
@@ -68,7 +68,7 @@ describe("WorkflowLoader", () => {
       "..",
       "..",
       "examples",
-      "peon-artifacts.json",
+      "example-artifacts.json",
     );
     let artifacts: Record<string, unknown>;
     try {

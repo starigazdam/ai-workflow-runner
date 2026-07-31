@@ -53,7 +53,7 @@ function threePhaseWorkflow(): WorkflowDef {
 
 /** Create a unique temp dir for each test. */
 function tempDir(label: string): string {
-  const dir = join(tmpdir(), `peon-stage7-test-${label}-${Date.now()}`);
+  const dir = join(tmpdir(), `workflow-stage7-test-${label}-${Date.now()}`);
   mkdirSync(dir, { recursive: true });
   return dir;
 }

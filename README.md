@@ -20,7 +20,7 @@ A TypeScript workflow engine that drives AI agents (GitHub Copilot, OpenAI, Anth
 ## Quick Start
 
 ```bash
-# Validate the example peon workflow YAML
+# Validate the example workflow YAML
 npm run validate-workflow-yaml
 
 # Run a mock scenario (no LLM needed)
@@ -38,8 +38,8 @@ npm run mcp-server
 npx tsx src/main.ts [options]
 
 Options:
-  --ticket <id>           Jira/ticket ID (e.g. COPEE2-1234)
-  --workflow <path>       Path to workflow.yaml  [default: examples/peon-workflow.yaml]
+  --ticket <id>           Jira/ticket ID (e.g. PROJ-1234)
+  --workflow <path>       Path to workflow.yaml  [default: examples/example-workflow.yaml]
   --repo-root <path>      Root of the repo the runner operates on.
                           The runner reads agent .md files from <repo-root>/.github/agents/
                           and stores context in <repo-root>/.github/tmp/.
@@ -67,15 +67,15 @@ Env vars:
 
 ```bash
 # Real run against a ticket using GitHub Copilot (default)
-npx tsx src/main.ts --ticket COPEE2-1234 --repo-root /path/to/your/repo
+npx tsx src/main.ts --ticket PROJ-1234 --repo-root /path/to/your/repo
 
 # Use OpenAI directly
-npx tsx src/main.ts --ticket COPEE2-1234 --runner openai --repo-root /path/to/your/repo
+npx tsx src/main.ts --ticket PROJ-1234 --runner openai --repo-root /path/to/your/repo
 
 # Dry run — see what would happen without calling any LLM
-npx tsx src/main.ts --ticket COPEE2-1234 --dry-run --repo-root /path/to/your/repo
+npx tsx src/main.ts --ticket PROJ-1234 --dry-run --repo-root /path/to/your/repo
 
-# Mock run with the peon story scenario
+# Mock run with the example story scenario
 npx tsx src/main.ts --mock --scenario story
 ```
 
@@ -103,7 +103,7 @@ Options:
 
 ```bash
 npx tsx src/batch.ts \
-  --tickets COPEE2-1234,COPEE2-5678 \
+  --tickets PROJ-1234,PROJ-5678 \
   --repo-root /path/to/your/repo \
   --runner anthropic \
   --max-iterations 2 \
@@ -143,7 +143,7 @@ All tools accept an optional `repo_root` parameter (overrides `WORKFLOW_REPO_ROO
 
 ## Workflow YAML Format
 
-See [`examples/peon-workflow.yaml`](examples/peon-workflow.yaml) for a full annotated example.
+See [`examples/example-workflow.yaml`](examples/example-workflow.yaml) for a full annotated example.
 
 Key sections:
 
@@ -190,7 +190,7 @@ Agent `.md` files live in `<repo-root>/.github/agents/`. The runner passes the f
 Each run writes to `runs/<ticket-id>-<timestamp>/`:
 
 ```
-runs/COPEE2-1234-2026-07-30T09-00-00/
+runs/PROJ-1234-2026-07-30T09-00-00/
 ├── SUMMARY.md          # token usage, cost, gate results
 ├── context-final.json  # full context snapshot
 ├── events.json         # all workflow events
@@ -201,7 +201,7 @@ runs/COPEE2-1234-2026-07-30T09-00-00/
 
 ## Bring Your Own Workflow
 
-1. Copy `examples/peon-workflow.yaml` as a starting point
+1. Copy `examples/example-workflow.yaml` as a starting point
 2. Define your phases, agents, gates, and routing
 3. Place agent `.md` files in `<your-repo>/.github/agents/`
 4. Run with `--workflow path/to/your-workflow.yaml --repo-root path/to/your-repo`
@@ -240,8 +240,8 @@ src/
     └── workflow.ts      # Zod schemas
 
 examples/
-├── peon-workflow.yaml   # Full OnePortal peon workflow definition
-└── peon-mock-data.yaml  # Mock data for peon workflow scenarios
+├── example-workflow.yaml   # Full example workflow definition
+└── example-mock-data.yaml  # Mock data for example workflow scenarios
 
 tests/                   # Vitest test suite
 runs/                    # Run artifacts (gitignored)

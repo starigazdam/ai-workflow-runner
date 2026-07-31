@@ -74,7 +74,7 @@ describe("evaluateExpression — null checks", () => {
   it("nested path != null", () => {
     expect(
       evaluateExpression("jira_data.key != null", {
-        jira_data: { key: "COPEE2-1" },
+        jira_data: { key: "PROJ-1" },
       }),
     ).toBe(true);
   });
@@ -298,20 +298,20 @@ describe("evaluateExpression — conjunction", () => {
 describe("evaluateExpression — workflow.yaml gates (integration)", () => {
   const fullContext = {
     jira_data: {
-      key: "COPEE2-9999",
+      key: "PROJ-9999",
       status: "In Progress",
       issuetype: "Story",
     },
-    repo_context: [{ name: "repo-a", branch: "feature/COPEE2-9999-test" }],
+    repo_context: [{ name: "repo-a", branch: "feature/PROJ-9999-test" }],
     plan: {
       branch: "feature/COPEE-9999-add-endpoint",
       subtasks: [{ id: 1 }, { id: 2 }],
     },
-    commits: { messages: ["COPEE2-9999: add endpoint"], repos: ["repo-a"] },
+    commits: { messages: ["PROJ-9999: add endpoint"], repos: ["repo-a"] },
     verification_result: { tests_passed: true, lint_passed: true },
     security_report: { critical: [], high: [], medium: [], low: [] },
     self_review_completed: true,
-    pr_data: { pr_id: "12345", title: "COPEE2-9999: add endpoint" },
+    pr_data: { pr_id: "12345", title: "PROJ-9999: add endpoint" },
     analysis_doc: { file_path: "/path/to/doc.md", summary: "Analysis" },
     bug_investigation: { classification: "CODE_FIX", hypothesis: "test" },
   };

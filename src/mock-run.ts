@@ -42,7 +42,7 @@ interface MockScenario {
 }
 
 function loadMockData(scenario: string): MockScenario {
-  const mockPath = join(ROOT, "examples", "peon-mock-data.yaml");
+  const mockPath = join(ROOT, "examples", "example-mock-data.yaml");
   const raw = readFileSync(mockPath, "utf-8");
   const parsed = yaml.load(raw) as {
     scenarios: Record<string, MockScenario>;
@@ -109,7 +109,7 @@ function fmtEvent(e: WorkflowEvent): string {
 async function main(): Promise<void> {
   const { scenario } = parseArgs();
   const mockData = loadMockData(scenario);
-  const workflow = loadWorkflow(join(ROOT, "examples", "peon-workflow.yaml"));
+  const workflow = loadWorkflow(join(ROOT, "examples", "example-workflow.yaml"));
 
   // ── Build run output directory
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
