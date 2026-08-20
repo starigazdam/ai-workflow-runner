@@ -26,6 +26,8 @@ import {
 } from "../workflow/WorkflowEngine.js";
 import { OpenAiRunner } from "../agent/OpenAiRunner.js";
 import { CopilotSdkRunner } from "../agent/CopilotSdkRunner.js";
+import { AnthropicRunner } from "../agent/AnthropicRunner.js";
+import { ClaudeSdkRunner } from "../agent/ClaudeSdkRunner.js";
 import { ContextStore } from "../context/ContextStore.js";
 import type { WorkflowEvent } from "../agent/AgentRunner.js";
 
@@ -88,7 +90,7 @@ function getOrCreateEngine(
   dryRun: boolean,
   autoApprove: boolean,
   workflowPath?: string,
-  runner: "copilot-sdk" | "openai" = "copilot-sdk",
+  runner: "copilot-sdk" | "openai" | "anthropic" | "claude-sdk" = "copilot-sdk",
   repoRoot: string = DEFAULT_REPO_ROOT,
 ): WorkflowEngine {
   const resolvedWorkflowPath = workflowPath ?? join(SDK_ROOT, "examples", "example-workflow.yaml");
@@ -110,7 +112,11 @@ function getOrCreateEngine(
   const agentRunner =
     runner === "openai"
       ? new OpenAiRunner({ repoRoot, dryRun })
-      : new CopilotSdkRunner({ repoRoot, dryRun });
+      : runner === "anthropic"
+        ? new AnthropicRunner({ repoRoot, dryRun })
+        : runner === "claude-sdk"
+          ? new ClaudeSdkRunner({ repoRoot, dryRun })
+          : new CopilotSdkRunner({ repoRoot, dryRun });
 
   const engineOptions = {
     workflow,
@@ -169,16 +175,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
           runner: {
             type: "string",
-            enum: ["copilot-sdk", "openai"],
+            enum: ["copilot-sdk", "openai", "anthropic", "claude-sdk"],
             description: "Runner to use. Default: copilot-sdk.",
           },
           dry_run: {
             type: "boolean",
-            description: "Skip LLM calls, just show phase transitions",
+            description: "Skip LLM calls, just show phase transitions"
           },
           auto_approve: {
             type: "boolean",
-            description: "Auto-approve all user_approval gates",
+            description: "Auto-approve all user_approval gates"
           },
           repo_root: {
             type: "string",
@@ -218,7 +224,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
           runner: {
             type: "string",
-            enum: ["copilot-sdk", "openai"],
+            enum: ["copilot-sdk", "openai", "anthropic", "claude-sdk"],
             description: "Runner to use. Default: copilot-sdk.",
           },
           dry_run: {
@@ -278,6 +284,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ((args as Record<string, unknown>).runner as
             | "copilot-sdk"
             | "openai"
+            | "anthropic"
+            | "claude-sdk"
             | undefined) ?? "copilot-sdk";
         const repoRoot =
           ((args as Record<string, unknown>).repo_root as string | undefined) ??
@@ -304,6 +312,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ((args as Record<string, unknown>).runner as
             | "copilot-sdk"
             | "openai"
+            | "anthropic"
+            | "claude-sdk"
             | undefined) ?? "copilot-sdk";
         const repoRoot =
           ((args as Record<string, unknown>).repo_root as string | undefined) ??

@@ -5,6 +5,7 @@
  *   npx tsx src/main.ts --ticket PROJ-1234                        # real run (copilot-sdk runner, default)
  *   npx tsx src/main.ts --ticket PROJ-1234 --runner openai          # raw /chat/completions fallback
  *   npx tsx src/main.ts --ticket PROJ-1234 --runner anthropic       # Anthropic API fallback
+ *   npx tsx src/main.ts --ticket PROJ-1234 --runner claude-sdk      # Claude Agent SDK (agentic, file/bash tools)
  *   npx tsx src/main.ts --ticket PROJ-1234 --dry-run                # show what would happen
  *   npx tsx src/main.ts --ticket PROJ-1234 --auto-approve           # skip approval pauses
  *   npx tsx src/main.ts --mock --scenario story                       # mock run
@@ -30,6 +31,10 @@
  *   ANTHROPIC_API_KEY=sk-ant-...
  *   LLM_MODEL=claude-sonnet-4-5
  *
+ * Env vars for Claude Agent SDK runner:
+ *   ANTHROPIC_API_KEY=sk-ant-...
+ *   LLM_MODEL=claude-sonnet-4-5
+ *
  * Env vars:
  *   WORKFLOW_REPO_ROOT  — fallback repo root when --repo-root is not supplied
  */
@@ -43,6 +48,7 @@ import { WorkflowEngine } from "./workflow/WorkflowEngine.js";
 import { CopilotSdkRunner } from "./agent/CopilotSdkRunner.js";
 import { OpenAiRunner } from "./agent/OpenAiRunner.js";
 import { AnthropicRunner } from "./agent/AnthropicRunner.js";
+import { ClaudeSdkRunner } from "./agent/ClaudeSdkRunner.js";
 import { MockAgentRunner } from "./agent/MockAgentRunner.js";
 import { ContextStore } from "./context/ContextStore.js";
 import { calculateCost, formatCost } from "./agent/pricing.js";
@@ -53,7 +59,7 @@ const SDK_ROOT = join(__dirname, "..");
 
 // ─── Args ───────────────────────────────────────────────────────────────────
 
-type RunnerType = "copilot-sdk" | "openai" | "anthropic" | "mock";
+type RunnerType = "copilot-sdk" | "openai" | "anthropic" | "claude-sdk" | "mock";
 
 interface CliArgs {
   ticket?: string;
@@ -124,10 +130,11 @@ function parseArgs(): CliArgs {
           v !== "copilot-sdk" &&
           v !== "openai" &&
           v !== "anthropic" &&
+          v !== "claude-sdk" &&
           v !== "mock"
         ) {
           console.error(
-            `Unknown runner: ${v}. Use copilot-sdk|openai|anthropic|mock`,
+            `Unknown runner: ${v}. Use copilot-sdk|openai|anthropic|claude-sdk|mock`,
           );
           process.exit(1);
         }
@@ -428,11 +435,17 @@ async function main(): Promise<void> {
             dryRun: args.dryRun,
             onAgentCall: (agentId) => logDryRun(agentId),
           })
-        : new OpenAiRunner({
-            repoRoot: REPO_ROOT,
-            dryRun: args.dryRun,
-            onAgentCall: (agentId) => logDryRun(agentId),
-          });
+        : args.runner === "claude-sdk"
+          ? new ClaudeSdkRunner({
+              repoRoot: REPO_ROOT,
+              dryRun: args.dryRun,
+              onAgentCall: (agentId) => logDryRun(agentId),
+            })
+          : new OpenAiRunner({
+              repoRoot: REPO_ROOT,
+              dryRun: args.dryRun,
+              onAgentCall: (agentId) => logDryRun(agentId),
+            });
 
   let lastWasDelta = false;
   const engine = new WorkflowEngine({

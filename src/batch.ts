@@ -32,6 +32,7 @@ import { WorkflowEngine } from "./workflow/WorkflowEngine.js";
 import type { WorkflowSnapshot } from "./workflow/WorkflowEngine.js";
 import { OpenAiRunner } from "./agent/OpenAiRunner.js";
 import { AnthropicRunner } from "./agent/AnthropicRunner.js";
+import { ClaudeSdkRunner } from "./agent/ClaudeSdkRunner.js";
 import { MockAgentRunner } from "./agent/MockAgentRunner.js";
 import type { AgentRunner, WorkflowEvent } from "./agent/AgentRunner.js";
 
@@ -40,7 +41,7 @@ const SDK_ROOT = join(__dirname, "..");
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type RunnerType = "openai" | "anthropic" | "mock";
+type RunnerType = "openai" | "anthropic" | "claude-sdk" | "mock";
 
 interface BatchArgs {
   tickets: string[];
@@ -99,8 +100,8 @@ function parseArgs(): BatchArgs {
         break;
       case "--runner": {
         const v = argv[++i];
-        if (v !== "openai" && v !== "anthropic" && v !== "mock") {
-          console.error(`Unknown runner: ${v}. Use openai|anthropic|mock`);
+        if (v !== "openai" && v !== "anthropic" && v !== "claude-sdk" && v !== "mock") {
+          console.error(`Unknown runner: ${v}. Use openai|anthropic|claude-sdk|mock`);
           process.exit(1);
         }
         parsed.runner = v;
@@ -172,6 +173,9 @@ function makeRunner(args: BatchArgs, scenarioData?: MockScenario): AgentRunner {
   }
   if (args.runner === "anthropic") {
     return new AnthropicRunner({ repoRoot, dryRun: args.dryRun });
+  }
+  if (args.runner === "claude-sdk") {
+    return new ClaudeSdkRunner({ repoRoot, dryRun: args.dryRun });
   }
   return new OpenAiRunner({ repoRoot, dryRun: args.dryRun });
 }
