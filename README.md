@@ -5,7 +5,7 @@ A TypeScript workflow engine that drives AI agents (GitHub Copilot, OpenAI, Anth
 ## Features
 
 - **Structured workflows** — define phases, gates, routing forks, and agent assignments in a single `workflow.yaml`
-- **Multiple runner backends** — GitHub Copilot SDK (default), OpenAI-compatible, Anthropic
+- **Multiple runner backends** — GitHub Copilot SDK (default), OpenAI-compatible, Anthropic (raw API), Claude Agent SDK (agentic)
 - **Gate system** — blocking / advisory gates with expression evaluation, user-approval pauses, and artifact validation
 - **Batch runner** — autonomous overnight execution with circuit breaker, per-ticket timeout, and iteration (Ralph loop)
 - **MCP server** — expose the engine as MCP tools so any MCP client can run/step/approve workflows
@@ -44,7 +44,7 @@ Options:
                           The runner reads agent .md files from <repo-root>/.github/agents/
                           and stores context in <repo-root>/.github/tmp/.
                           Fallback: WORKFLOW_REPO_ROOT env var, then process.cwd().
-  --runner <type>         copilot-sdk | openai | anthropic | mock  [default: copilot-sdk]
+  --runner <type>         copilot-sdk | openai | anthropic | claude-sdk | mock  [default: copilot-sdk]
   --dry-run               Show phase transitions without calling LLMs
   --auto-approve          Skip all user_approval pauses
   --mock                  Use mock runner (alias for --runner mock)
@@ -60,8 +60,17 @@ Env vars:
   LLM_BASE_URL            Base URL for OpenAI-compatible runner
   LLM_API_KEY             API key for OpenAI-compatible runner
   LLM_MODEL               Model name
-  ANTHROPIC_API_KEY       API key for Anthropic runner
+  ANTHROPIC_API_KEY       API key for Anthropic and Claude Agent SDK runners
 ```
+
+### Which Anthropic-backed runner should I use?
+
+| | `anthropic` | `claude-sdk` |
+|---|---|---|
+| API | Raw Anthropic Messages API | Claude Agent SDK (`@anthropic-ai/claude-agent-sdk`) |
+| Tools | None — single `write_outputs` tool call for structured output | Full tool use: file read/write/edit, bash, scoped to `--repo-root` |
+| Turns | Single request/response per phase | Multi-turn agentic loop (`--max-turns`, default 20) |
+| Best for | Cheap, fast structured-output phases (classification, summarization, intake) | Implementation/review phases that need to read/write files in the target repo |
 
 ### Examples
 
@@ -219,6 +228,7 @@ src/
 │   ├── CopilotSdkRunner.ts
 │   ├── OpenAiRunner.ts
 │   ├── AnthropicRunner.ts
+│   ├── ClaudeSdkRunner.ts
 │   ├── MockAgentRunner.ts
 │   └── pricing.ts
 ├── workflow/            # State machine

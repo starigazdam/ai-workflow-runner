@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        # All agent runner tests (AnthropicRunner, CopilotSdkRunner, ClaudeSdkRunner,
+        # OpenAiRunner) mock their respective SDK/API clients — no real LLM calls are
+        # made, no ANTHROPIC_API_KEY / OPENAI_API_KEY / GitHub Copilot credentials are
+        # required, and no LLM usage fees are incurred by running CI.
+        run: npm test
+
+      - name: Validate example workflow YAML
+        run: npm run validate-workflow-yaml
